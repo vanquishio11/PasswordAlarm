@@ -6,6 +6,7 @@ on:
 jobs:
   build-ios:
     runs-on: macos-latest
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -15,8 +16,17 @@ jobs:
         with:
           channel: stable
 
+      # ✅ THIS IS THE IMPORTANT FIX
+      - name: Generate missing iOS project
+        run: flutter create .
+
       - name: Flutter pub get
         run: flutter pub get
+
+      - name: Install CocoaPods
+        run: |
+          cd ios
+          pod install
 
       - name: Build iOS (no codesign)
         run: flutter build ios --release --no-codesign
@@ -27,7 +37,6 @@ jobs:
           mkdir -p Payload
           cp -R Runner.app Payload/
           zip -r Runner.ipa Payload
-          ls -lah Runner.ipa
 
       - name: Upload IPA artifact
         uses: actions/upload-artifact@v4
