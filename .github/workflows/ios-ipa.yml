@@ -16,7 +16,6 @@ jobs:
         with:
           channel: stable
 
-      # Generate iOS folder if missing
       - name: Ensure iOS platform exists
         run: flutter create .
 
@@ -28,8 +27,7 @@ jobs:
           cd ios
           pod install
 
-      # 👇 Build WITHOUT signing (true unsigned build)
-      - name: Build iOS via xcodebuild (no signing at all)
+      - name: Build iOS with xcodebuild (signing OFF)
         run: |
           cd ios
           xcodebuild \
@@ -37,15 +35,16 @@ jobs:
             -scheme Runner \
             -configuration Release \
             -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY="" \
+            DEVELOPMENT_TEAM="" \
             build
 
-      # Package into IPA manually
       - name: Package Runner.app -> Runner.ipa
         run: |
-          mkdir Payload
+          mkdir -p Payload
           cp -R ios/build/Release-iphoneos/Runner.app Payload/
           zip -r Runner.ipa Payload
 
