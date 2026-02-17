@@ -28,7 +28,7 @@ class _HomeScreenState extends State<HomeScreen> {
     _load();
     _clockTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       setState(() => _now = DateTime.now());
-      _checkFires();
+      unawaited(_checkFires());
     });
   }
 
@@ -45,8 +45,6 @@ class _HomeScreenState extends State<HomeScreen> {
       ..addAll(loaded));
   }
 
-  Future<void> _persist() async => _store.save(_alarms);
-
   Future<void> _openNewAlarm() async {
     final created = await showModalBottomSheet<Alarm>(
       context: context,
@@ -56,11 +54,14 @@ class _HomeScreenState extends State<HomeScreen> {
     );
 
     if (created == null) return;
-    setState(() => _alarms.insert(0, created));
-    await _persist();
+
+    final updated = await _store.addAlarm(created);
+    setState(() => _alarms
+      ..clear()
+      ..addAll(updated.reversed));
   }
 
-  void _checkFires() {
+  Future<void> _checkFires() async {
     for (final alarm in _alarms) {
       if (!alarm.enabled) continue;
 
@@ -74,7 +75,7 @@ class _HomeScreenState extends State<HomeScreen> {
           now.second == 0) {
         // Fire once per minute tick
         alarm.enabled = false;
-        _persist();
+        await _store.upsertAlarm(alarm);
         _openRinging(alarm);
         break;
       }
@@ -188,7 +189,10 @@ class _HomeScreenState extends State<HomeScreen> {
                           onLongPress: () => _openRinging(alarm), // quick test
                           onToggle: (v) async {
                             setState(() => alarm.enabled = v);
-                            await _persist();
+                            final updated = await _store.upsertAlarm(alarm);
+                            setState(() => _alarms
+                              ..clear()
+                              ..addAll(updated));
                           },
                         ),
                     ],
