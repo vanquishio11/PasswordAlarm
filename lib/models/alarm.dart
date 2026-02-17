@@ -29,6 +29,32 @@ class Alarm {
 
   String amPm() => isAm ? 'AM' : 'PM';
 
+  /// Convert stored 12-hour time to a local DateTime (today) at that time.
+  DateTime toLocalDateTimeToday() {
+    int h24;
+    if (isAm) {
+      h24 = (hour == 12) ? 0 : hour;
+    } else {
+      h24 = (hour == 12) ? 12 : hour + 12;
+    }
+    final now = DateTime.now();
+    return DateTime(now.year, now.month, now.day, h24, minute);
+  }
+
+  /// Stable int id for notifications derived from string id.
+  int notificationId() => _fnv1a32(id);
+
+  static int _fnv1a32(String input) {
+    const int fnvPrime = 16777619;
+    int hash = 2166136261;
+    for (final unit in input.codeUnits) {
+      hash ^= unit;
+      hash = (hash * fnvPrime) & 0xFFFFFFFF;
+    }
+    // flutter_local_notifications expects a signed 32-bit-ish int; keep it positive.
+    return hash & 0x7FFFFFFF;
+  }
+
   Map<String, dynamic> toMap() => {
         'id': id,
         'hour': hour,

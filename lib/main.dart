@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:password_alarm/screens/home_screen.dart';
 import 'package:password_alarm/theme/app_theme.dart';
+import 'services/notifications_service.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await NotificationsService.instance.init();
   runApp(const PasswordAlarmApp());
 }
 
